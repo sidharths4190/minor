@@ -56,13 +56,13 @@ int sendFile(FILE* fp, char* buf, int s)
 // driver code 
 int main() 
 { 
-	int sockfd, nBytes,typeOfRequestBytes; 
+	int sockfd, nBytes,textBytes,fileNameBytes; 
 	struct sockaddr_in addr_con; 
 	int addrlen = sizeof(addr_con); 
 	addr_con.sin_family = AF_INET; 
 	addr_con.sin_port = htons(PORT_NO); 
 	addr_con.sin_addr.s_addr = INADDR_ANY; 
-	char net_buf[NET_BUF_SIZE]; 
+	char net_buf[NET_BUF_SIZE],rec_text[NET_BUF_SIZE],fileName[NET_BUF_SIZE]; 
 	FILE* fp; 
 
 	// socket() 
@@ -89,7 +89,49 @@ int main()
 						NET_BUF_SIZE, sendrecvflag, 
 						(struct sockaddr*)&addr_con, &addrlen); 
 
-		if(nBytes!=0){
+
+
+
+
+
+        if(net_buf[0]=='n' && net_buf[1]=='u' && net_buf[2]=='l' && net_buf[3]=='l'){
+            printf("This is store file request\n");
+
+            fileNameBytes = recvfrom(sockfd, fileName, 
+						NET_BUF_SIZE, sendrecvflag, 
+						(struct sockaddr*)&addr_con, &addrlen);
+            
+            
+            textBytes = recvfrom(sockfd, rec_text, 
+						NET_BUF_SIZE, sendrecvflag, 
+						(struct sockaddr*)&addr_con, &addrlen);
+
+            //printf("%d",textBytes);
+            
+            //printf("%s",rec_text);
+
+            //printf("%s",fileName);
+            //char folderName[20];
+            //strcpy(folderName,"serverFiles");
+            char newFileName[40];
+            strcpy(newFileName,"serverFiles/");
+            strcat(newFileName,fileName);
+
+            printf("%s",newFileName);
+            //FILE *fp=fopen("serverFiles/") 
+            FILE *fptr;
+            fptr = fopen(newFileName,"w");
+            if(fptr == NULL)
+            {
+                printf("error");
+                exit(1);
+            }
+            fprintf(fptr,"%s",rec_text);
+            fclose(fptr);
+
+
+        }
+        else{
 		fp = fopen(net_buf, "r"); 
 		printf("\nFile Name Received: %s\n", net_buf); 
 		if (fp == NULL) 
@@ -115,15 +157,7 @@ int main()
 		} 
 		if (fp != NULL) 
 			fclose(fp); 
-		}
-		else{
-			char* fileContent;
-			int fileBytes = recvfrom(sockfd, fileContent, 
-						NET_BUF_SIZE, sendrecvflag, 
-						(struct sockaddr*)&addr_con, &addrlen);
-
-			printf("%s",fileContent); 
-		}
+        }
 	} 
 	return 0; 
 } 

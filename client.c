@@ -30,38 +30,25 @@ char Cipher(char ch)
 } 
 
 // function to receive file 
-int recvFile(char* buf, int s,char* ss) 
+int recvFile(char* buf, int s) 
 { 
-    printf("%s",ss);
 	int i; 
 	char ch; 
-    char data[NET_BUF_SIZE];
-    FILE *fileAddress;
-    fileAddress = fopen("clientfiles/ss.txt", "a+");
 	for (i = 0; i < s; i++) { 
 		ch = buf[i]; 
 		ch = Cipher(ch); 
-         
-
 		if (ch == EOF) 
-			{
-                fprintf(fileAddress,"%s",data);
-                fclose(fileAddress);
-                return 1;} 
+			return 1; 
 		else
-            data[i] = ch;
-			//fputs(data, fileAddress);
-            printf("%c", data[i]); 
+			printf("%c", ch); 
 	} 
-    //fputs(data, fileAddress);
-    
 	return 0; 
 } 
 
 // driver code 
 int main() 
 { 
-	int sockfd, nBytes,select; 
+	int sockfd, nBytes; 
 	struct sockaddr_in addr_con; 
 	int addrlen = sizeof(addr_con); 
 	addr_con.sin_family = AF_INET; 
@@ -78,81 +65,88 @@ int main()
 		printf("\nfile descriptor not received!!\n"); 
 	else
 		printf("\nfile descriptor %d received\n", sockfd); 
-    
-    printf("\n if you want to view the files press 1");
-    printf("\n if you want to send the files press 2");
-    printf("\n if you want to receive the files press 3");
-    scanf("%d",&select);
 
-    //switch(select)
-    
+        int n;
 
-    
-    
+
 	while (1) { 
 
-		switch(select){
-			case 1:
-		{
-		char* type="receive";
-		printf("\nPlease enter file name to receive:\n"); 
-		scanf("%s", net_buf); 
-        char filename[20];
-        strcpy(filename,net_buf);
-		sendto(sockfd, net_buf, NET_BUF_SIZE, 
-			sendrecvflag, (struct sockaddr*)&addr_con, 
-			addrlen); 
-		sendto(sockfd, type, sizeof(type), 
-			sendrecvflag, (struct sockaddr*)&addr_con, 
-			addrlen);
-		printf("\n---------Data Received---------\n"); 
+        printf("ENter choice");
+        scanf("%d",&n);
 
-		while (1) { 
-			// receive 
-			clearBuf(net_buf); 
-			nBytes = recvfrom(sockfd, net_buf, NET_BUF_SIZE, 
-							sendrecvflag, (struct sockaddr*)&addr_con, 
-							&addrlen); 
+        switch (n)
+        {
+        case 1:
+            {/* code */
+                        printf("\nPlease enter file name to receive:\n"); 
+                    scanf("%s", net_buf); 
+                    sendto(sockfd, net_buf, NET_BUF_SIZE, 
+                        sendrecvflag, (struct sockaddr*)&addr_con, 
+                        addrlen); 
 
-			// process 
-			if (recvFile(net_buf, NET_BUF_SIZE,filename)) { 
-				break; 
-			} 
-		} 
-		printf("\n-------------------------------\n"); 
+                    printf("\n---------Data Received---------\n"); 
 
-		char* name;
-		int nameBytes = recvfrom(sockfd, name, 
-						sizeof(name), sendrecvflag, 
-						(struct sockaddr*)&addr_con, &addrlen);
-						break;
+                    while (1) { 
+                        // receive 
+                        clearBuf(net_buf); 
+                        nBytes = recvfrom(sockfd, net_buf, NET_BUF_SIZE, 
+                                        sendrecvflag, (struct sockaddr*)&addr_con, 
+                                        &addrlen); 
+
+                        // process 
+                        if (recvFile(net_buf, NET_BUF_SIZE)) { 
+                            break; 
+                        } 
+                    } 
+                    printf("\n-------------------------------\n"); 
+                    break;
+            }
+        case 2:
+            {
+                sendto(sockfd, "null", sizeof("null"), 
+                        sendrecvflag, (struct sockaddr*)&addr_con, 
+                        addrlen); 
+
+                	printf("\nPlease enter file name to send:\n"); 
+                    scanf("%s", net_buf); 
+                    char filen[20];
+                    strcpy(filen,net_buf);
+                    char ch;
+                    char* data;
+                    int i=0;
+                    long numBytes;
+                    char text[1000];
+                    FILE *fp=fopen(filen, "r");
+                    while (fgets(text,sizeof(text),fp)!=NULL)
+                    {
+                        //printf("%s",text);
+                    }
+                    
+                    fclose(fp);
+
+                    printf("%s",text);
+
+                    //send file name
+                    sendto(sockfd, filen, sizeof(filen), 
+                        sendrecvflag, (struct sockaddr*)&addr_con, 
+                        addrlen);
+
+                    //send file data
+                    sendto(sockfd, text, sizeof(text), 
+                        sendrecvflag, (struct sockaddr*)&addr_con, 
+                        addrlen);
+                    break;
+            }
+        default:
+            break;
+        }
+
+
+
+
+
+
+		
 	} 
-	case 2:{
-		char filename="";
-		sendto(sockfd, filename, sizeof(filename), 
-			sendrecvflag, (struct sockaddr*)&addr_con, 
-			addrlen);
-		clearBuf(net_buf);
-			printf("\nPlease enter file name to send:\n"); 
-		scanf("%s", net_buf); 
-        char filen[20];
-        strcpy(filen,net_buf);
-		char ch;
-		char* data;
-		int i=0;
-        FILE *file;
-        file = fopen(filen,"r");
-        while ((ch=fgetc(file)) != EOF)
-        {printf("%c", ch);
-		data[i]=ch;
-		i++;
-		}
-        fclose(file);
-		sendto(sockfd, data, sizeof(data), 
-			sendrecvflag, (struct sockaddr*)&addr_con, 
-			addrlen); 
-	}
-		}
 	return 0; 
-	}
 } 
